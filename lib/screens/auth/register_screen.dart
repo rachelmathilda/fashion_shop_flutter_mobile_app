@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/app_theme.dart';
+import '../../repositories/auth_repository.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -15,8 +17,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _usernameCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
-  bool _obscure = true;
-  bool _obscureConfirm = true;
+  bool _loading = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -26,6 +28,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _passwordCtrl.dispose();
     _confirmCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _signUp() async {
+    if (_emailCtrl.text.trim().isEmpty ||
+        _nameCtrl.text.trim().isEmpty ||
+        _usernameCtrl.text.trim().isEmpty ||
+        _passwordCtrl.text.isEmpty) {
+      setState(() => _error = 'Please fill in all fields.');
+      return;
+    }
+    if (_passwordCtrl.text != _confirmCtrl.text) {
+      setState(() => _error = 'Passwords do not match.');
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await AuthRepository.instance.signUp(
+        email: _emailCtrl.text.trim(),
+        password: _passwordCtrl.text,
+        fullName: _nameCtrl.text.trim(),
+        username: _usernameCtrl.text.trim(),
+      );
+      if (!mounted) return;
+      context.go('/home');
+    } on FirebaseAuthException catch (e) {
+      setState(() => _error = e.message ?? 'Sign up failed.');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -38,11 +72,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Make an Account',
-                  style: Theme.of(context).textTheme.headlineMedium),
+              Text(
+                'Make an Account',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text('Fill the blank spaces below',
-                  style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                'Fill the blank spaces below',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               const SizedBox(height: 28),
               _field(
                 controller: _emailCtrl,
@@ -63,66 +103,74 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 icon: Icons.person_outline,
               ),
               const SizedBox(height: 14),
+              // Password — no visibility toggle in design
               TextField(
                 controller: _passwordCtrl,
-                obscureText: _obscure,
-                decoration: InputDecoration(
+                obscureText: true,
+                decoration: const InputDecoration(
                   hintText: 'Password',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscure
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined),
-                    onPressed: () => setState(() => _obscure = !_obscure),
-                    color: AppColors.grey,
-                  ),
+                  prefixIcon: Icon(Icons.lock_outline),
                 ),
               ),
               const SizedBox(height: 14),
               TextField(
                 controller: _confirmCtrl,
-                obscureText: _obscureConfirm,
-                decoration: InputDecoration(
+                obscureText: true,
+                decoration: const InputDecoration(
                   hintText: 'Confirm Password',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscureConfirm
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined),
-                    onPressed: () =>
-                        setState(() => _obscureConfirm = !_obscureConfirm),
-                    color: AppColors.grey,
-                  ),
+                  prefixIcon: Icon(Icons.lock_outline),
                 ),
               ),
+              if (_error != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  _error!,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    color: AppColors.error,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: () => context.push('/otp'),
-                child: const Text('Sign Up'),
+                onPressed: _loading ? null : _signUp,
+                child: _loading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: AppColors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('Sign Up'),
+              ),
+              const SizedBox(height: 28),
+              // Social — Google only
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [_socialBtn(_googleIcon())],
               ),
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _socialIcon(Icons.g_mobiledata),
-                  const SizedBox(width: 20),
-                  _socialIcon(Icons.apple),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('already have an account? ',
-                      style: Theme.of(context).textTheme.bodyMedium),
+                  Text(
+                    'already have an account? ',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                   GestureDetector(
                     onTap: () => context.pop(),
-                    child: const Text('sign in',
-                        style: TextStyle(
-                            color: AppColors.primary,
-                            fontFamily: 'Inter',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600)),
+                    child: const Text(
+                      'sign in',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -142,14 +190,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
-      decoration: InputDecoration(
-        hintText: hint,
-        prefixIcon: Icon(icon),
-      ),
+      decoration: InputDecoration(hintText: hint, prefixIcon: Icon(icon)),
     );
   }
 
-  Widget _socialIcon(IconData icon) {
+  Widget _socialBtn(Widget iconWidget) {
     return Container(
       width: 60,
       height: 60,
@@ -157,7 +202,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
         color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Icon(icon, size: 30, color: AppColors.black),
+      child: Center(child: iconWidget),
+    );
+  }
+
+  Widget _googleIcon() {
+    return const Text(
+      'G',
+      style: TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        color: Color(0xFF4285F4),
+        fontFamily: 'Inter',
+      ),
     );
   }
 }

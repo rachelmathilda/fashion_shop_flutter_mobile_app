@@ -26,27 +26,18 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Shopping bag icon
-            Container(
-              width: 120,
-              height: 120,
-              decoration: const BoxDecoration(
-                color: AppColors.primaryLight,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.shopping_bag_outlined,
-                size: 60,
-                color: AppColors.primary,
-              ),
+            Image.asset(
+              'assets/images/splash.png',
+              width: 200,
+              fit: BoxFit.contain,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Text(
               'Vaelys',
-              style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
