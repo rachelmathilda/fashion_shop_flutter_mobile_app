@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import '../models/product_model.dart';
 import '../screens/auth/splash_screen.dart';
 import '../screens/auth/onboarding_screen.dart';
 import '../screens/auth/login_screen.dart';
@@ -7,6 +8,7 @@ import '../screens/home/home_screen.dart';
 import '../screens/catalog/catalog_screen.dart';
 import '../screens/catalog/filter_screen.dart';
 import '../screens/catalog/try_on_screen.dart';
+import '../screens/catalog/product_detail_screen.dart';
 import '../screens/bag/bag_screen.dart';
 import '../screens/order/order_screen.dart';
 import '../screens/order/shipping_screen.dart';
@@ -51,7 +53,16 @@ class AppRouter {
         ],
       ),
       GoRoute(path: '/filter', builder: (_, __) => const FilterScreen()),
-      GoRoute(path: '/try-on', builder: (_, __) => const TryOnScreen()),
+      GoRoute(
+        path: '/try-on',
+        builder: (_, state) =>
+            TryOnScreen(product: state.extra as ProductModel),
+      ),
+      GoRoute(
+        path: '/product-detail',
+        builder: (_, state) =>
+            ProductDetailScreen(product: state.extra as ProductModel),
+      ),
       GoRoute(path: '/order', builder: (_, __) => const OrderScreen()),
       GoRoute(path: '/shipping', builder: (_, __) => const ShippingScreen()),
       GoRoute(path: '/payment', builder: (_, __) => const PaymentScreen()),

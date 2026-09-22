@@ -16,6 +16,23 @@ class ProductRepository {
         .map((s) => s.docs.map(ProductModel.fromFirestore).toList());
   }
 
+  Stream<List<ProductModel>> watchRecommended({int limit = 10}) {
+    return _col
+        .where('isRecommended', isEqualTo: true)
+        .orderBy('rating', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((s) => s.docs.map(ProductModel.fromFirestore).toList());
+  }
+
+  Stream<List<ProductModel>> watchPopular({int limit = 10}) {
+    return _col
+        .orderBy('sold', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((s) => s.docs.map(ProductModel.fromFirestore).toList());
+  }
+
   Future<List<ProductModel>> fetchAll() async {
     final s = await _col.orderBy('createdAt', descending: true).get();
     return s.docs.map(ProductModel.fromFirestore).toList();

@@ -1,17 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../theme/app_theme.dart';
+import '../../models/cart_item_model.dart';
 import '../../models/product_model.dart';
+import '../../repositories/cart_repository.dart';
+import '../../repositories/product_repository.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/product_card.dart';
-
-final _catalogProducts = [
-  ProductModel(id: '1', name: 'Sage Blouse', price: 20, imageUrl: '', rating: 4.5, sold: 10, category: 'Blouse', gender: 'Woman', sizes: ['S', 'M', 'L']),
-  ProductModel(id: '2', name: 'Army Blouse', price: 20, imageUrl: '', rating: 4.5, sold: 10, category: 'Blouse', gender: 'Woman', sizes: ['S', 'M', 'L']),
-  ProductModel(id: '3', name: 'Stripe Clothes', price: 20, imageUrl: '', rating: 4.5, sold: 10, category: 'Dress', gender: 'Woman', sizes: ['S', 'M', 'L']),
-  ProductModel(id: '4', name: 'Denim Skirt', price: 20, imageUrl: '', rating: 4.5, sold: 10, category: 'Skirt', gender: 'Woman', sizes: ['S', 'M', 'L']),
-  ProductModel(id: '5', name: 'Emerald Top', price: 20, imageUrl: '', rating: 4.5, sold: 10, category: 'Blouse', gender: 'Woman', sizes: ['S', 'M', 'L']),
-  ProductModel(id: '6', name: 'Black Skirt', price: 30, imageUrl: '', rating: 4.0, sold: 10, category: 'Skirt', gender: 'Woman', sizes: ['S', 'M', 'L']),
-];
 
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
@@ -22,6 +17,43 @@ class CatalogScreen extends StatefulWidget {
 
 class _CatalogScreenState extends State<CatalogScreen> {
   final _searchCtrl = TextEditingController();
+  final _productRepository = ProductRepository.instance;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchCtrl.addListener(() {
+      setState(() => _query = _searchCtrl.text.trim().toLowerCase());
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _addToCart(ProductModel product) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Silakan login dulu')));
+      return;
+    }
+    await CartRepository.instance.addItem(
+      uid,
+      CartItem(
+        product: product,
+        selectedSize: product.sizes.isNotEmpty ? product.sizes.first : 'M',
+      ),
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${product.name} ditambahkan ke keranjang')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,20 +77,48 @@ class _CatalogScreenState extends State<CatalogScreen> {
               ),
             ),
             Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 14,
-                  crossAxisSpacing: 14,
-                  childAspectRatio: 0.68,
-                ),
-                itemCount: _catalogProducts.length,
-                itemBuilder: (context, i) => ProductCard(
-                  product: _catalogProducts[i],
-                  onTryOn: () => context.push('/try-on'),
-                  onAddToCart: () {},
-                ),
+              child: StreamBuilder<List<ProductModel>>(
+                stream: _productRepository.watchAll(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return const Center(child: Text('Gagal memuat produk'));
+                  }
+                  var products = snapshot.data ?? [];
+                  if (_query.isNotEmpty) {
+                    products = products
+                        .where((p) => p.name.toLowerCase().contains(_query))
+                        .toList();
+                  }
+                  if (products.isEmpty) {
+                    return const Center(child: Text('Produk tidak ditemukan'));
+                  }
+                  return GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 14,
+                          crossAxisSpacing: 14,
+                          childAspectRatio: 0.68,
+                        ),
+                    itemCount: products.length,
+                    itemBuilder: (context, i) => ProductCard(
+                      product: products[i],
+                      onTap: () =>
+                          context.push('/product-detail', extra: products[i]),
+                      onTryOn: () =>
+                          context.push('/try-on', extra: products[i]),
+                      onAddToCart: () => _addToCart(products[i]),
+                    ),
+                  );
+                },
               ),
             ),
           ],

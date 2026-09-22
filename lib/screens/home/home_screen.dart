@@ -2,66 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
 import '../../models/product_model.dart';
+import '../../repositories/product_repository.dart';
 import '../../widgets/product_card.dart';
 
-final _demoProducts = [
-  ProductModel(
-    id: '1',
-    name: 'Blue Denim Dress',
-    price: 30,
-    imageUrl:
-        'https://images.unsplash.com/photo-1594938298603-c8148c4b3b3b?w=400',
-    rating: 4.5,
-    sold: 10,
-    category: 'Dress',
-    gender: 'Woman',
-    sizes: ['S', 'M', 'L'],
-  ),
-  ProductModel(
-    id: '2',
-    name: 'Navy Flower Dress',
-    price: 20,
-    imageUrl:
-        'https://images.unsplash.com/photo-1591369822096-ffd140ec948f?w=400',
-    rating: 4.5,
-    sold: 10,
-    category: 'Dress',
-    gender: 'Woman',
-    sizes: ['S', 'M', 'L'],
-  ),
-  ProductModel(
-    id: '3',
-    name: 'Denim Jumpsuit',
-    price: 30,
-    imageUrl:
-        'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400',
-    rating: 4.5,
-    sold: 10,
-    category: 'Jumpsuit',
-    gender: 'Woman',
-    sizes: ['S', 'M', 'L'],
-  ),
-  ProductModel(
-    id: '4',
-    name: 'Dark Denim Skirt',
-    price: 30,
-    imageUrl: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400',
-    rating: 4.5,
-    sold: 10,
-    category: 'Skirt',
-    gender: 'Woman',
-    sizes: ['S', 'M', 'L'],
-  ),
-];
-
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final _productRepository = ProductRepository.instance;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.white,
-      // AppBar: bell | Vaelys | chat — matches design exactly
       appBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
@@ -94,7 +51,6 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Banner — full width model photo
             SizedBox(
               height: 280,
               width: double.infinity,
@@ -113,55 +69,57 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-
-            // Recommendation
             _sectionHeader(
               context,
               'Recommendation',
               () => context.go('/catalog'),
             ),
-            SizedBox(
-              height: 230,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: 2,
-                itemBuilder: (context, i) => Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: SizedBox(
-                    width: 160,
-                    child: ProductCard(
-                      product: _demoProducts[i],
-                      onTryOn: () => context.push('/try-on'),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Popular
+            _horizontalProductList(_productRepository.watchRecommended()),
             _sectionHeader(context, 'Popular', () => context.go('/catalog')),
-            SizedBox(
-              height: 230,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: 2,
-                itemBuilder: (context, i) => Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: SizedBox(
-                    width: 160,
-                    child: ProductCard(
-                      product: _demoProducts[i + 2],
-                      onTryOn: () => context.push('/try-on'),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            _horizontalProductList(_productRepository.watchPopular()),
             const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _horizontalProductList(Stream<List<ProductModel>> stream) {
+    return SizedBox(
+      height: 230,
+      child: StreamBuilder<List<ProductModel>>(
+        stream: stream,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            );
+          }
+          if (snapshot.hasError) {
+            return const Center(child: Text('Gagal memuat produk'));
+          }
+          final products = snapshot.data ?? [];
+          if (products.isEmpty) {
+            return const Center(child: Text('Belum ada produk'));
+          }
+          return ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: products.length,
+            itemBuilder: (context, i) => Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: SizedBox(
+                width: 160,
+                child: ProductCard(
+                  product: products[i],
+                  onTap: () =>
+                      context.push('/product-detail', extra: products[i]),
+                  onTryOn: () => context.push('/try-on', extra: products[i]),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

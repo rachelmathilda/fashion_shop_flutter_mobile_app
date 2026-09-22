@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/product_model.dart';
+import '../models/cart_item_model.dart';
 
 class CartRepository {
   CartRepository._();

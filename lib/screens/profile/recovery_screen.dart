@@ -4,8 +4,6 @@ import 'package:pin_code_fields/pin_code_fields.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/vaely_app_bar.dart';
 
-// ─── Password Recovery ────────────────────────────────────────────────────────
-
 class RecoveryScreen extends StatelessWidget {
   const RecoveryScreen({super.key});
 
@@ -27,11 +25,15 @@ class RecoveryScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-                  Text('Password recovery',
-                      style: Theme.of(context).textTheme.headlineSmall),
+                  Text(
+                    'Password recovery',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
                   const SizedBox(height: 6),
-                  Text('Enter your email to recover your password',
-                      style: Theme.of(context).textTheme.bodyMedium),
+                  Text(
+                    'Enter your email to recover your password',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                   const SizedBox(height: 28),
                   TextField(
                     controller: emailCtrl,
@@ -56,8 +58,6 @@ class RecoveryScreen extends StatelessWidget {
   }
 }
 
-// ─── OTP Screen ───────────────────────────────────────────────────────────────
-
 class OtpScreen extends StatelessWidget {
   const OtpScreen({super.key});
 
@@ -79,34 +79,34 @@ class OtpScreen extends StatelessWidget {
                 children: [
                   const SizedBox(height: 16),
                   Center(
-                    child: Text('Check your email',
-                        style: Theme.of(context).textTheme.headlineSmall),
+                    child: Text(
+                      'Check your email',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Center(
-                    child: Text("We've sent the code to your email",
-                        style: Theme.of(context).textTheme.bodyMedium),
+                    child: Text(
+                      "We've sent the code to your email",
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ),
                   const SizedBox(height: 32),
-                  PinCodeTextField(
-                    appContext: context,
+                  MaterialPinField(
                     length: 4,
-                    obscureText: false,
-                    animationType: AnimationType.fade,
-                    pinTheme: PinTheme(
-                      shape: PinCodeFieldShape.box,
-                      borderRadius: BorderRadius.circular(12),
-                      fieldHeight: 65,
-                      fieldWidth: 65,
-                      activeFillColor: AppColors.white,
-                      inactiveFillColor: AppColors.white,
-                      selectedFillColor: AppColors.white,
-                      activeColor: AppColors.primary,
-                      inactiveColor: AppColors.greyLight,
-                      selectedColor: AppColors.primary,
-                    ),
-                    enableActiveFill: true,
                     onChanged: (_) {},
+                    theme: MaterialPinTheme(
+                      shape: MaterialPinShape.outlined,
+                      cellSize: const Size(65, 65),
+                      borderRadius: BorderRadius.circular(12),
+                      borderColor: AppColors.greyLight,
+                      focusedBorderColor: AppColors.primary,
+                      filledBorderColor: AppColors.primary,
+                      fillColor: AppColors.white,
+                      focusedFillColor: AppColors.white,
+                      filledFillColor: AppColors.white,
+                      entryAnimation: MaterialPinAnimation.fade,
+                    ),
                   ),
                   const Spacer(),
                   OutlinedButton(
@@ -127,8 +127,6 @@ class OtpScreen extends StatelessWidget {
     );
   }
 }
-
-// ─── Reset Password Screen ────────────────────────────────────────────────────
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -161,13 +159,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 children: [
                   const SizedBox(height: 16),
                   Center(
-                    child: Text('Reset password',
-                        style: Theme.of(context).textTheme.headlineSmall),
+                    child: Text(
+                      'Reset password',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Center(
-                    child: Text('Please enter your new password',
-                        style: Theme.of(context).textTheme.bodyMedium),
+                    child: Text(
+                      'Please enter your new password',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ),
                   const SizedBox(height: 28),
                   TextField(
@@ -177,9 +179,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       hintText: 'New password',
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
-                        icon: Icon(_obscureNew
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined),
+                        icon: Icon(
+                          _obscureNew
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
                         onPressed: () =>
                             setState(() => _obscureNew = !_obscureNew),
                         color: AppColors.grey,
@@ -194,11 +198,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       hintText: 'Confirm password',
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
-                        icon: Icon(_obscureConfirm
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined),
-                        onPressed: () => setState(
-                            () => _obscureConfirm = !_obscureConfirm),
+                        icon: Icon(
+                          _obscureConfirm
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
+                        onPressed: () =>
+                            setState(() => _obscureConfirm = !_obscureConfirm),
                         color: AppColors.grey,
                       ),
                     ),
