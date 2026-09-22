@@ -39,12 +39,12 @@ dependencies:
   # Utils
   intl: ^0.20.3
   logger: ^2.3.0
-  firebase_core: ^4.13.0
-  cloud_firestore: ^6.8.0
-  firebase_auth: ^6.5.7
 
-  # Firebase
-  firebase_storage: ^13.6.0
+  # Firebase (BoM 4.20.0, pinned exact to keep the plugins in sync)
+  firebase_core: 4.15.0
+  cloud_firestore: 6.10.0
+  firebase_auth: 6.7.0
+  firebase_storage: 13.6.0
 
   # ML Kit (dipakai buat validasi foto try-on)
   google_mlkit_pose_detection: ^0.16.1
