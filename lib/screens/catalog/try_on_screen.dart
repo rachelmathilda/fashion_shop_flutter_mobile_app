@@ -2,7 +2,9 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../models/cart_item_model.dart';
 import '../../models/product_model.dart';
+import '../../repositories/cart_repository.dart';
 import '../../services/try_on_service.dart';
 import '../../theme/app_theme.dart';
 
@@ -24,6 +26,7 @@ class _TryOnScreenState extends State<TryOnScreen> {
   File? _personPhoto;
   String? _resultImageUrl;
   String? _errorMessage;
+  bool _isAddingToCart = false;
 
   @override
   void dispose() {
@@ -91,6 +94,77 @@ class _TryOnScreenState extends State<TryOnScreen> {
       _resultImageUrl = null;
       _errorMessage = null;
     });
+  }
+
+  Future<void> _addToCart() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Silakan login dulu')));
+      return;
+    }
+
+    final size = await _pickSizeDialog();
+    if (size == null) return;
+
+    setState(() => _isAddingToCart = true);
+    await CartRepository.instance.addItem(
+      uid,
+      CartItem(product: widget.product, selectedSize: size),
+    );
+    if (!mounted) return;
+    setState(() => _isAddingToCart = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${widget.product.name} ditambahkan ke keranjang'),
+      ),
+    );
+  }
+
+  Future<String?> _pickSizeDialog() {
+    return showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Pilih ukuran',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: widget.product.sizes.map((s) {
+                  return GestureDetector(
+                    onTap: () => Navigator.pop(context, s),
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(child: Text(s)),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showPickerSheet() {
@@ -183,8 +257,17 @@ class _TryOnScreenState extends State<TryOnScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {},
-                        child: const Text('Add to Cart'),
+                        onPressed: _isAddingToCart ? null : _addToCart,
+                        child: _isAddingToCart
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.white,
+                                ),
+                              )
+                            : const Text('Add to Cart'),
                       ),
                     ),
                   ],

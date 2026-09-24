@@ -1,4 +1,7 @@
 import 'package:go_router/go_router.dart';
+import '../models/cart_item_model.dart';
+import '../models/order_draft.dart';
+import '../models/order_model.dart';
 import '../models/product_model.dart';
 import '../screens/auth/splash_screen.dart';
 import '../screens/auth/onboarding_screen.dart';
@@ -11,15 +14,16 @@ import '../screens/catalog/try_on_screen.dart';
 import '../screens/catalog/product_detail_screen.dart';
 import '../screens/bag/bag_screen.dart';
 import '../screens/order/order_screen.dart';
+import '../screens/order/discount_screen.dart';
 import '../screens/order/shipping_screen.dart';
+import '../screens/order/address_detail_screen.dart' as order_address;
 import '../screens/order/payment_screen.dart';
 import '../screens/order/payment_success_screen.dart';
 import '../screens/order/payment_fail_screen.dart';
 import '../screens/order/transactions_screen.dart';
-import '../screens/profile/profile_screen.dart';
+import '../screens/profile/profile_screen.dart' hide AddressDetailScreen;
 import '../screens/profile/edit_profile_screen.dart';
 import '../screens/profile/language_screen.dart';
-import '../screens/profile/address_detail_screen.dart';
 import '../screens/profile/recovery_screen.dart';
 import '../screens/profile/otp_screen.dart';
 import '../screens/profile/reset_password_screen.dart';
@@ -63,12 +67,28 @@ class AppRouter {
         builder: (_, state) =>
             ProductDetailScreen(product: state.extra as ProductModel),
       ),
-      GoRoute(path: '/order', builder: (_, __) => const OrderScreen()),
-      GoRoute(path: '/shipping', builder: (_, __) => const ShippingScreen()),
-      GoRoute(path: '/payment', builder: (_, __) => const PaymentScreen()),
+      GoRoute(
+        path: '/order',
+        builder: (_, state) =>
+            OrderScreen(items: state.extra as List<CartItem>),
+      ),
+      GoRoute(path: '/discount', builder: (_, __) => const DiscountScreen()),
+      GoRoute(
+        path: '/shipping',
+        builder: (_, state) => ShippingScreen(draft: state.extra as OrderDraft),
+      ),
+      GoRoute(
+        path: '/order-address',
+        builder: (_, __) => const order_address.AddressDetailScreen(),
+      ),
+      GoRoute(
+        path: '/payment',
+        builder: (_, state) => PaymentScreen(draft: state.extra as OrderDraft),
+      ),
       GoRoute(
         path: '/payment-success',
-        builder: (_, __) => const PaymentSuccessScreen(),
+        builder: (_, state) =>
+            PaymentSuccessScreen(order: state.extra as OrderModel),
       ),
       GoRoute(
         path: '/payment-fail',
@@ -84,10 +104,10 @@ class AppRouter {
       ),
       GoRoute(path: '/language', builder: (_, __) => const LanguageScreen()),
       GoRoute(
-        path: '/address-detail',
-        builder: (_, __) => const AddressDetailScreen(),
+        path: '/chat',
+        builder: (_, state) =>
+            ChatScreen(product: state.extra as ProductModel?),
       ),
-      GoRoute(path: '/chat', builder: (_, __) => const ChatScreen()),
     ],
   );
 }

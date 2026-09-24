@@ -17,6 +17,8 @@ class OrderItem {
     required this.selectedSize,
   });
 
+  num get subtotal => price * quantity;
+
   factory OrderItem.fromMap(Map<String, dynamic> data) {
     return OrderItem(
       productId: data['productId'] ?? '',
@@ -44,20 +46,32 @@ class OrderModel {
   final String id;
   final String userId;
   final List<OrderItem> items;
+  final num subtotal;
+  final num discountAmount;
+  final String? couponCode;
+  final num deliveryFee;
   final num total;
   final String status;
   final String paymentMethod;
-  final String address;
+  final String addressText;
+  final double? addressLat;
+  final double? addressLng;
   final DateTime createdAt;
 
   OrderModel({
     required this.id,
     required this.userId,
     required this.items,
+    required this.subtotal,
+    required this.discountAmount,
+    this.couponCode,
+    required this.deliveryFee,
     required this.total,
     required this.status,
     required this.paymentMethod,
-    required this.address,
+    required this.addressText,
+    this.addressLat,
+    this.addressLng,
     required this.createdAt,
   });
 
@@ -69,10 +83,16 @@ class OrderModel {
       items: (data['items'] as List<dynamic>? ?? [])
           .map((e) => OrderItem.fromMap(Map<String, dynamic>.from(e)))
           .toList(),
+      subtotal: data['subtotal'] ?? 0,
+      discountAmount: data['discountAmount'] ?? 0,
+      couponCode: data['couponCode'],
+      deliveryFee: data['deliveryFee'] ?? 0,
       total: data['total'] ?? 0,
-      status: data['status'] ?? 'pending',
+      status: data['status'] ?? 'processing',
       paymentMethod: data['paymentMethod'] ?? '',
-      address: data['address'] ?? '',
+      addressText: data['addressText'] ?? '',
+      addressLat: (data['addressLat'] as num?)?.toDouble(),
+      addressLng: (data['addressLng'] as num?)?.toDouble(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
@@ -81,10 +101,16 @@ class OrderModel {
     return {
       'userId': userId,
       'items': items.map((e) => e.toMap()).toList(),
+      'subtotal': subtotal,
+      'discountAmount': discountAmount,
+      'couponCode': couponCode,
+      'deliveryFee': deliveryFee,
       'total': total,
       'status': status,
       'paymentMethod': paymentMethod,
-      'address': address,
+      'addressText': addressText,
+      'addressLat': addressLat,
+      'addressLng': addressLng,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }

@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/product_model.dart';
 import '../models/cart_item_model.dart';
+import 'product_repository.dart';
 
 class CartRepository {
   CartRepository._();
@@ -12,32 +12,42 @@ class CartRepository {
           .doc(uid)
           .collection('cart');
 
-  Stream<List<CartItem>> watchCart(
-    String uid, {
-    required ProductModel Function(Map<String, dynamic> data) productBuilder,
-  }) {
-    return _cartRef(uid).snapshots().map(
-      (snap) => snap.docs.map((doc) {
+  Stream<List<CartItem>> watchCart(String uid) {
+    return _cartRef(uid).snapshots().asyncMap((snap) async {
+      final items = <CartItem>[];
+      for (final doc in snap.docs) {
         final data = doc.data();
-        return CartItem(
-          product: productBuilder(data),
-          quantity: data['quantity'] ?? 1,
-          selectedSize: data['selectedSize'] ?? 'M',
+        final productId = data['productId'] as String?;
+        if (productId == null) continue;
+        final product = await ProductRepository.instance.fetchById(productId);
+        if (product == null) continue;
+        items.add(
+          CartItem(
+            product: product,
+            quantity: data['quantity'] ?? 1,
+            selectedSize: data['selectedSize'] ?? 'M',
+          ),
         );
-      }).toList(),
-    );
+      }
+      return items;
+    });
   }
 
   Future<void> addItem(String uid, CartItem item) async {
     await _cartRef(uid).doc(item.product.id).set(item.toFirestore());
   }
 
-  Future<void> updateQuantity(
+  Future<void> updateItem(
     String uid,
-    String productId,
-    int quantity,
-  ) async {
-    await _cartRef(uid).doc(productId).update({'quantity': quantity});
+    String productId, {
+    int? quantity,
+    String? selectedSize,
+  }) async {
+    final data = <String, dynamic>{};
+    if (quantity != null) data['quantity'] = quantity;
+    if (selectedSize != null) data['selectedSize'] = selectedSize;
+    if (data.isEmpty) return;
+    await _cartRef(uid).doc(productId).update(data);
   }
 
   Future<void> removeItem(String uid, String productId) async {

@@ -216,7 +216,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       Icons.chat_bubble_outline,
                       color: AppColors.primary,
                     ),
-                    onPressed: () => context.push('/chat'),
+                    onPressed: () => context.push('/chat', extra: product),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
